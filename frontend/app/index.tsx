@@ -8,6 +8,8 @@ import { MoonStarIcon, XIcon, SunIcon } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
 import { Image, type ImageStyle, View } from 'react-native';
+import { useAuth } from '@clerk/clerk-expo';
+import { useEffect } from 'react';
 
 const LOGO = {
   light: require('@/assets/images/react-native-reusables-light.png'),
@@ -36,6 +38,17 @@ const SCREEN_OPTIONS = {
 export default function Screen() {
   const { colorScheme } = useColorScheme();
   const { user } = useUser();
+
+  const { getToken } = useAuth();
+
+  useEffect(() => {
+    const logToken = async () => {
+      const token = await getToken();
+      console.log('TOKEN:', token);
+    };
+
+    logToken();
+  }, []);
 
   return (
     <>
