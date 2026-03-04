@@ -1,6 +1,6 @@
-module.exports = {
-  User: require("./User"),
-  Exercise: require("./Exercise"),
-  Playlist: require("./Playlist"),
-  Session: require("./Session"),
-};
+import User from "./User.js";
+import Exercise from "./Exercise.js";
+import Playlist from "./Playlist.js";
+import Session from "./Session.js";
+
+export { User, Exercise, Playlist, Session };

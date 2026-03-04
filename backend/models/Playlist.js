@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const PlaylistItemSchema = new mongoose.Schema(
   {
@@ -49,4 +49,4 @@ const PlaylistSchema = new mongoose.Schema(
 
 PlaylistSchema.index({ clerkUserId: 1, updatedAt: -1 });
 
-module.exports = mongoose.model("Playlist", PlaylistSchema);
+export default mongoose.model("Playlist", PlaylistSchema);

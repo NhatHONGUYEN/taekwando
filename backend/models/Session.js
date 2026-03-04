@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const SessionItemSchema = new mongoose.Schema(
   {
@@ -74,4 +74,4 @@ const SessionSchema = new mongoose.Schema(
 
 SessionSchema.index({ clerkUserId: 1, performedAt: -1 });
 
-module.exports = mongoose.model("Session", SessionSchema);
+export default mongoose.model("Session", SessionSchema);

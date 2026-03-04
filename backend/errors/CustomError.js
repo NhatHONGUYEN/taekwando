@@ -1,24 +1,24 @@
-class CustomError extends Error {
+export class CustomError extends Error {
   constructor(message, status = 400) {
     super(message);
     this.status = status;
   }
 }
 
-class NotFoundError extends CustomError {
+export class NotFoundError extends CustomError {
   constructor(message = "Not found") {
     super(message, 404);
   }
 }
 
-class BadRequestError extends CustomError {
+export class BadRequestError extends CustomError {
   constructor(message = "Bad request") {
     super(message, 400);
   }
 }
 
-module.exports = {
-  CustomError,
-  NotFoundError,
-  BadRequestError,
-};
+export class UnauthorizedError extends CustomError {
+  constructor(message = "Unauthorized") {
+    super(message, 401);
+  }
+}

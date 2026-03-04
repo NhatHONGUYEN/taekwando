@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const CloudinaryVideoSchema = new mongoose.Schema(
   {
@@ -78,4 +78,4 @@ const ExerciseSchema = new mongoose.Schema(
 ExerciseSchema.index({ category: 1, level: 1, isPublished: 1 });
 ExerciseSchema.index({ focus: 1, category: 1 });
 
-module.exports = mongoose.model("Exercise", ExerciseSchema);
+export default mongoose.model("Exercise", ExerciseSchema);
