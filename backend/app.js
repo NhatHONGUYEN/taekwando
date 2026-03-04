@@ -1,10 +1,12 @@
+import { clerkMiddleware } from "@clerk/express";
+
 const express = require("express");
 const cors = require("cors");
 const errorHandler = require("./middlewares/errorHandler");
 const helmet = require("helmet");
 
 const app = express();
-
+app.use(clerkMiddleware());
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
