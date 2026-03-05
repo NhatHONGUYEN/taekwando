@@ -4,6 +4,7 @@ import cors from "cors";
 import helmet from "helmet";
 import userRoutes from "./routes/user.routes.js";
 import playlistRoutes from "./routes/playlist.routes.js";
+import exerciseRoutes from "./routes/exercise.routes.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
 
 const app = express();
@@ -14,6 +15,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
 app.use("/users", userRoutes);
 app.use("/playlists", playlistRoutes);
+app.use("/exercises", exerciseRoutes);
 
 app.use(errorHandler);
 
