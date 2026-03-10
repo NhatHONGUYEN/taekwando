@@ -1,7 +1,8 @@
 import '@/global.css';
+import { queryClient } from '@/lib/api/queryClient';
 
 import { NAV_THEME } from '@/lib/theme';
-import { queryClient } from '@/src/lib/api/queryClient';
+
 import { ClerkProvider, useAuth } from '@clerk/clerk-expo';
 import { tokenCache } from '@clerk/clerk-expo/token-cache';
 import { ThemeProvider } from '@react-navigation/native';
