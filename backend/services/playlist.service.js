@@ -20,7 +20,7 @@ export const getPlaylistById = async (playlistId, userId) => {
   const playlist = await Playlist.findOne({
     _id: playlistId,
     clerkUserId: userId,
-  });
+  }).populate("items.exerciseId");
   if (!playlist) throw new NotFoundError("Playlist not found");
   return playlist;
 };
