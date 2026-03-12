@@ -3,10 +3,13 @@ import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import { usePlaylists } from '@/features/playlists/hooks/usePlaylists';
 import { PlaylistCard } from '@/features/playlists/components/PlaylistCard';
 import { CreatePlaylistModal } from '@/features/playlists/components/CreatePlaylistModal';
+import { EditPlaylistModal } from '@/features/playlists/components/EditPlaylistModal';
+import type { Playlist } from '@/features/playlists/types';
 
 export default function PlaylistsScreen() {
   const { data, isLoading, isError } = usePlaylists();
   const [modalVisible, setModalVisible] = useState(false);
+  const [editingPlaylist, setEditingPlaylist] = useState<Playlist | null>(null);
 
   if (isLoading) {
     return (
@@ -27,6 +30,7 @@ export default function PlaylistsScreen() {
   return (
     <View className="flex-1 bg-gray-50">
       <CreatePlaylistModal visible={modalVisible} onClose={() => setModalVisible(false)} />
+      <EditPlaylistModal playlist={editingPlaylist} onClose={() => setEditingPlaylist(null)} />
 
       {!data || data.length === 0 ? (
         <View className="flex-1 items-center justify-center px-6">
@@ -53,7 +57,7 @@ export default function PlaylistsScreen() {
           <FlatList
             data={data}
             keyExtractor={(item) => item._id}
-            renderItem={({ item }) => <PlaylistCard playlist={item} />}
+            renderItem={({ item }) => <PlaylistCard playlist={item} onEdit={setEditingPlaylist} />}
             contentContainerStyle={{ paddingBottom: 24 }}
             showsVerticalScrollIndicator={false}
           />
