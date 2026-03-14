@@ -1,127 +1,302 @@
-import { ScrollView, View, Text, TouchableOpacity } from 'react-native';
+import { useState } from 'react';
+import { ScrollView, View, Text, TouchableOpacity, Image, Share, StatusBar } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import {
+  ArrowLeft,
+  Share2,
+  Zap,
+  Dumbbell,
+  FileText,
+  CheckCircle2,
+  Play,
+  ListPlus,
+} from 'lucide-react-native';
 import { useExercise } from '@/features/exercises/hooks/useExercise';
+import { AddToPlaylistModal } from '@/features/exercises/components/AddToPlaylistModal';
 
-const CATEGORY_COLORS: Record<string, string> = {
-  mobility: 'bg-blue-100 text-blue-700',
-  flexibility: 'bg-green-100 text-green-700',
-  strength: 'bg-orange-100 text-orange-700',
+const BG = '#0D0905';
+const SURFACE = '#1A1008';
+const BORDER = '#2D2015';
+const BRAND = '#E8622A';
+
+const LEVEL_LABEL: Record<number, string> = { 1: 'BEGINNER', 2: 'INTERMEDIATE', 3: 'ADVANCED' };
+const LEVEL_COLOR: Record<number, string> = { 1: '#22C55E', 2: '#F59E0B', 3: '#EF4444' };
+
+const CATEGORY_TITLE: Record<string, string> = {
+  technique: 'Technique & Discipline',
+  poomsae: 'Poomsae & Form',
+  sparring: 'Sparring & Combat',
+  mobility: 'Mobility & Movement',
+  flexibility: 'Flexibility & Stretch',
+  strength: 'Strength & Power',
 };
-
-function Badge({ label, colorClass }: { label: string; colorClass: string }) {
-  const [bg, text] = colorClass.split(' ');
-  return (
-    <View className={`rounded-full px-3 py-1 ${bg}`}>
-      <Text className={`text-xs font-medium capitalize ${text}`}>{label}</Text>
-    </View>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <View className="mb-5">
-      <Text className="mb-2 text-sm font-semibold uppercase tracking-widest text-gray-400">
-        {title}
-      </Text>
-      {children}
-    </View>
-  );
-}
 
 export default function ExerciseDetailScreen() {
   const params = useLocalSearchParams<{ slug: string }>();
   const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
   const router = useRouter();
+  const [showPlaylistModal, setShowPlaylistModal] = useState(false);
 
   const { data: exercise, isLoading, isError } = useExercise(slug);
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center">
-        <Text>Loading...</Text>
+      <View
+        style={{ flex: 1, backgroundColor: BG, alignItems: 'center', justifyContent: 'center' }}>
+        <Text style={{ color: '#6B7280' }}>Loading...</Text>
       </View>
     );
   }
 
   if (isError || !exercise) {
     return (
-      <View className="flex-1 items-center justify-center px-6">
-        <Text className="text-gray-500">Exercise not found.</Text>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: BG,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: 24,
+        }}>
+        <Text style={{ color: '#6B7280' }}>Exercise not found.</Text>
       </View>
     );
   }
 
-  const categoryStyle = CATEGORY_COLORS[exercise.category] ?? 'bg-gray-100 text-gray-700';
+  const mins = Math.max(1, Math.round(exercise.durationSecDefault / 60));
+  const levelLabel = LEVEL_LABEL[exercise.level] ?? `LEVEL ${exercise.level}`;
+  const levelColor = LEVEL_COLOR[exercise.level] ?? BRAND;
+  const sectionTitle = CATEGORY_TITLE[exercise.category] ?? 'About this Exercise';
+  const focusText = exercise.focus.join(' & ');
+  const equipmentText = exercise.equipment.filter((e) => e !== 'none').join(', ') || 'None';
 
   return (
-    <View className="flex-1 bg-gray-50">
-      {/* Header */}
-      <View className="bg-gray-900 px-4 pb-5 pt-12">
-        <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-sm text-gray-400">← Back</Text>
-        </TouchableOpacity>
+    <View style={{ flex: 1, backgroundColor: BG }}>
+      <StatusBar barStyle="light-content" backgroundColor={BG} />
+      <AddToPlaylistModal
+        exercise={showPlaylistModal ? exercise : null}
+        onClose={() => setShowPlaylistModal(false)}
+      />
 
-        <View className="mb-2 flex-row items-start justify-between gap-2">
-          <Text className="flex-1 text-2xl font-bold text-white">{exercise.name}</Text>
-          <Badge label={exercise.category} colorClass={categoryStyle} />
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 160 }}
+        showsVerticalScrollIndicator={false}>
+        {/* ── Hero image ── */}
+        <View style={{ height: 320, backgroundColor: '#111' }}>
+          {exercise.image?.url ? (
+            <Image
+              source={{ uri: exercise.image.url }}
+              style={{ width: '100%', height: '100%' }}
+              resizeMode="cover"
+            />
+          ) : null}
+
+          {/* Gradient overlay */}
+          <View
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: 160,
+              justifyContent: 'flex-end',
+              paddingHorizontal: 20,
+              paddingBottom: 20,
+              backgroundColor: 'rgba(13,9,5,0.72)',
+            }}>
+            <Text style={{ color: '#fff', fontWeight: '900', fontSize: 32, lineHeight: 38 }}>
+              {exercise.name}
+            </Text>
+          </View>
+
+          {/* Nav bar */}
+          <View
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              paddingTop: 52,
+              paddingHorizontal: 20,
+              paddingBottom: 12,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}>
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 19,
+                backgroundColor: 'rgba(0,0,0,0.45)',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              <ArrowLeft size={18} color="#fff" />
+            </TouchableOpacity>
+
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>Exercise Detail</Text>
+
+            <TouchableOpacity
+              onPress={() => Share.share({ title: exercise.name, message: exercise.name })}
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 19,
+                backgroundColor: 'rgba(0,0,0,0.45)',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              <Share2 size={18} color="#fff" />
+            </TouchableOpacity>
+          </View>
         </View>
 
-        <View className="flex-row gap-4">
-          <Text className="text-sm text-gray-400">Level {exercise.level}</Text>
-          <Text className="text-sm text-gray-400">{exercise.durationSecDefault}s</Text>
-          {exercise.equipment.length > 0 && exercise.equipment[0] !== 'none' && (
-            <Text className="text-sm text-gray-400">{exercise.equipment.join(', ')}</Text>
+        {/* ── Level + duration row ── */}
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 12,
+            paddingHorizontal: 20,
+            paddingTop: 16,
+            paddingBottom: 20,
+          }}>
+          <View
+            style={{
+              backgroundColor: levelColor,
+              borderRadius: 20,
+              paddingHorizontal: 14,
+              paddingVertical: 5,
+            }}>
+            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 12, letterSpacing: 0.8 }}>
+              {levelLabel}
+            </Text>
+          </View>
+          <Text style={{ color: '#D1D5DB', fontWeight: '700', fontSize: 14 }}>{mins} MIN</Text>
+        </View>
+
+        {/* ── Info tiles ── */}
+        <View style={{ flexDirection: 'row', gap: 12, paddingHorizontal: 20, marginBottom: 28 }}>
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: SURFACE,
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: BORDER,
+              padding: 14,
+            }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 6 }}>
+              <Zap size={13} color={BRAND} fill={BRAND} />
+              <Text style={{ color: BRAND, fontWeight: '700', fontSize: 11, letterSpacing: 0.6 }}>
+                FOCUS
+              </Text>
+            </View>
+            <Text style={{ color: '#fff', fontWeight: '600', fontSize: 14 }}>
+              {focusText || '—'}
+            </Text>
+          </View>
+
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: SURFACE,
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: BORDER,
+              padding: 14,
+            }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 6 }}>
+              <Dumbbell size={13} color={BRAND} />
+              <Text style={{ color: BRAND, fontWeight: '700', fontSize: 11, letterSpacing: 0.6 }}>
+                EQUIPMENT
+              </Text>
+            </View>
+            <Text style={{ color: '#fff', fontWeight: '600', fontSize: 14 }}>{equipmentText}</Text>
+          </View>
+        </View>
+
+        {/* ── Description section ── */}
+        <View style={{ paddingHorizontal: 20, marginBottom: 28 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+            <FileText size={20} color={BRAND} />
+            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 18 }}>{sectionTitle}</Text>
+          </View>
+
+          {!!exercise.shortDescription && (
+            <Text style={{ color: '#9CA3AF', fontSize: 15, lineHeight: 24, marginBottom: 12 }}>
+              {exercise.shortDescription}
+            </Text>
+          )}
+          {!!exercise.description && (
+            <Text style={{ color: '#9CA3AF', fontSize: 15, lineHeight: 24 }}>
+              {exercise.description}
+            </Text>
           )}
         </View>
 
-        {exercise.focus.length > 0 && (
-          <View className="mt-3 flex-row flex-wrap gap-2">
-            {exercise.focus.map((f) => (
-              <View key={f} className="rounded-full bg-gray-700 px-3 py-1">
-                <Text className="text-xs text-gray-200">{f}</Text>
+        {/* ── Instructions as checkmarks ── */}
+        {exercise.instructions.length > 0 && (
+          <View style={{ paddingHorizontal: 20, gap: 10 }}>
+            {exercise.instructions.map((step, i) => (
+              <View
+                key={i}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'flex-start',
+                  gap: 12,
+                  backgroundColor: SURFACE,
+                  borderRadius: 14,
+                  borderWidth: 1,
+                  borderColor: BORDER,
+                  padding: 14,
+                }}>
+                <CheckCircle2 size={20} color={BRAND} fill={BRAND} style={{ marginTop: 1 }} />
+                <Text style={{ flex: 1, color: '#D1D5DB', fontSize: 14, lineHeight: 21 }}>
+                  {step}
+                </Text>
               </View>
             ))}
           </View>
         )}
-      </View>
-
-      <ScrollView className="flex-1 px-4 pt-5" contentContainerStyle={{ paddingBottom: 40 }}>
-        {/* Instructions */}
-        {exercise.instructions.length > 0 && (
-          <Section title="Instructions">
-            {exercise.instructions.map((step, i) => (
-              <View key={i} className="mb-2 flex-row gap-3">
-                <Text className="w-5 text-sm font-bold text-gray-400">{i + 1}.</Text>
-                <Text className="flex-1 text-sm leading-5 text-gray-700">{step}</Text>
-              </View>
-            ))}
-          </Section>
-        )}
-
-        {/* Common mistakes */}
-        {exercise.commonMistakes.length > 0 && (
-          <Section title="Common mistakes">
-            {exercise.commonMistakes.map((m, i) => (
-              <View key={i} className="mb-2 flex-row gap-2">
-                <Text className="text-sm text-red-400">✕</Text>
-                <Text className="flex-1 text-sm leading-5 text-gray-700">{m}</Text>
-              </View>
-            ))}
-          </Section>
-        )}
-
-        {/* Safety notes */}
-        {exercise.safetyNotes.length > 0 && (
-          <Section title="Safety notes">
-            {exercise.safetyNotes.map((n, i) => (
-              <View key={i} className="mb-2 flex-row gap-2">
-                <Text className="text-sm text-yellow-500">⚠</Text>
-                <Text className="flex-1 text-sm leading-5 text-gray-700">{n}</Text>
-              </View>
-            ))}
-          </Section>
-        )}
       </ScrollView>
+
+      {/* ── Sticky bottom CTAs ── */}
+      <View
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          backgroundColor: BG,
+          paddingHorizontal: 20,
+          paddingTop: 12,
+          paddingBottom: 32,
+          gap: 10,
+          borderTopWidth: 1,
+          borderTopColor: BORDER,
+        }}>
+        <TouchableOpacity
+          onPress={() => setShowPlaylistModal(true)}
+          activeOpacity={0.85}
+          style={{
+            backgroundColor: 'transparent',
+            borderRadius: 16,
+            height: 52,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 10,
+            borderWidth: 1.5,
+            borderColor: BRAND,
+          }}>
+          <ListPlus size={18} color={BRAND} />
+          <Text style={{ color: BRAND, fontWeight: '700', fontSize: 15 }}>Add to Playlist</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
