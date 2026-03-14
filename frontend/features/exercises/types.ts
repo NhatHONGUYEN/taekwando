@@ -9,6 +9,16 @@ export type ExerciseVideo = {
 
 export type ExerciseCategory = 'mobility' | 'flexibility' | 'strength';
 
+export type PaginatedExercises = {
+  items: Exercise[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+};
+
 export type Exercise = {
   _id: string;
   name: string;
