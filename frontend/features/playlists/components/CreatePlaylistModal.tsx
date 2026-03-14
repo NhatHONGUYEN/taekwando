@@ -8,8 +8,14 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
 } from 'react-native';
 import { useCreatePlaylist } from '../hooks/useCreatePlaylist';
+
+const BRAND = '#E8622A';
+const SURFACE = '#1A1008';
+const INPUT_BG = '#231810';
+const BORDER = '#2D2015';
 
 type Props = {
   visible: boolean;
@@ -43,49 +49,110 @@ export function CreatePlaylistModal({ visible, onClose }: Props) {
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={handleClose}>
+      <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)' }} onPress={handleClose} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1 justify-end">
-        <View className="rounded-t-3xl bg-white px-6 pb-10 pt-6 shadow-lg">
-          <Text className="mb-6 text-xl font-bold">New playlist</Text>
+        style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
+        <View
+          style={{
+            backgroundColor: SURFACE,
+            borderTopLeftRadius: 28,
+            borderTopRightRadius: 28,
+            paddingHorizontal: 24,
+            paddingTop: 24,
+            paddingBottom: 40,
+          }}>
+          {/* Drag handle */}
+          <View
+            style={{
+              width: 36,
+              height: 4,
+              backgroundColor: BORDER,
+              borderRadius: 2,
+              alignSelf: 'center',
+              marginBottom: 20,
+            }}
+          />
 
-          <Text className="mb-1 text-sm font-medium text-gray-700">Name *</Text>
+          <Text style={{ color: '#fff', fontWeight: '800', fontSize: 20, marginBottom: 20 }}>
+            New Playlist
+          </Text>
+
+          <Text style={{ color: '#9CA3AF', fontSize: 12, fontWeight: '600', marginBottom: 6 }}>
+            NAME *
+          </Text>
           <TextInput
             value={name}
             onChangeText={setName}
             placeholder="e.g. Morning warm-up"
-            className="mb-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-base"
+            placeholderTextColor="#4B5563"
             autoFocus
+            style={{
+              backgroundColor: INPUT_BG,
+              borderWidth: 1,
+              borderColor: BORDER,
+              borderRadius: 12,
+              paddingHorizontal: 14,
+              paddingVertical: 12,
+              fontSize: 15,
+              color: '#fff',
+              marginBottom: 16,
+            }}
           />
 
-          <Text className="mb-1 text-sm font-medium text-gray-700">Description</Text>
+          <Text style={{ color: '#9CA3AF', fontSize: 12, fontWeight: '600', marginBottom: 6 }}>
+            DESCRIPTION
+          </Text>
           <TextInput
             value={description}
             onChangeText={setDescription}
             placeholder="Optional description"
-            className="mb-6 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-base"
+            placeholderTextColor="#4B5563"
             multiline
             numberOfLines={3}
             textAlignVertical="top"
+            style={{
+              backgroundColor: INPUT_BG,
+              borderWidth: 1,
+              borderColor: BORDER,
+              borderRadius: 12,
+              paddingHorizontal: 14,
+              paddingVertical: 12,
+              fontSize: 15,
+              color: '#fff',
+              marginBottom: 24,
+              minHeight: 80,
+            }}
           />
 
-          <View className="flex-row gap-3">
+          <View style={{ flexDirection: 'row', gap: 12 }}>
             <TouchableOpacity
               onPress={handleClose}
-              className="flex-1 items-center rounded-xl border border-gray-200 py-3">
-              <Text className="font-medium text-gray-600">Cancel</Text>
+              style={{
+                flex: 1,
+                alignItems: 'center',
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: BORDER,
+                paddingVertical: 14,
+              }}>
+              <Text style={{ color: '#9CA3AF', fontWeight: '600' }}>Cancel</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               onPress={handleSubmit}
               disabled={!name.trim() || isPending}
-              className={`flex-1 items-center rounded-xl py-3 ${
-                !name.trim() || isPending ? 'bg-gray-300' : 'bg-black'
-              }`}>
+              style={{
+                flex: 1,
+                alignItems: 'center',
+                borderRadius: 12,
+                paddingVertical: 14,
+                backgroundColor: !name.trim() || isPending ? '#4B2010' : BRAND,
+              }}>
               {isPending ? (
-                <ActivityIndicator color="white" size="small" />
+                <ActivityIndicator color="#fff" size="small" />
               ) : (
-                <Text className="font-medium text-white">Create</Text>
+                <Text style={{ color: '#fff', fontWeight: '700' }}>Create</Text>
               )}
             </TouchableOpacity>
           </View>
