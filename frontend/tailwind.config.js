@@ -3,11 +3,12 @@ const { hairlineWidth } = require('nativewind/theme');
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: 'class',
-  content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}'],
+  content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}', './features/**/*.{ts,tsx}'],
   presets: [require('nativewind/preset')],
   theme: {
     extend: {
       colors: {
+        // ── Tokens CSS variables (thème clair/sombre) ──────────────
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
@@ -40,6 +41,30 @@ module.exports = {
         card: {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
+        },
+
+        // ── TKD STRIKE Brand Colors ─────────────────────────────────
+        brand: {
+          DEFAULT: '#E8622A', // orange principal
+          dark: '#C44E1C', // orange foncé (hover, pressed)
+          light: '#F07A45', // orange clair (badges, highlights)
+          faded: '#E8622A33', // orange transparent (fond badge)
+        },
+
+        // ── Surfaces dark mode ──────────────────────────────────────
+        tkd: {
+          bg: '#0D0905', // fond principal dark
+          surface: '#1A1008', // card dark
+          raised: '#231810', // card élevée / popover dark
+          navy: '#1B2535', // inputs / secondary dark
+          border: '#2D2015', // bordures dark
+        },
+
+        // ── Catégories d'exercices ──────────────────────────────────
+        category: {
+          mobility: '#3B82F6', // bleu
+          flexibility: '#22C55E', // vert
+          strength: '#E8622A', // orange (brand)
         },
       },
       borderRadius: {
