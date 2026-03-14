@@ -61,6 +61,9 @@ export type SessionRuntimeItem = {
   exerciseName: string;
   exerciseSlug: string;
   targetDurationSec: number;
+  exerciseImage?: string;
+  shortDescription?: string;
+  tip?: string;
   // filled by user during session
   completed: boolean;
   repsDone?: number;

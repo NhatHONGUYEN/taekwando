@@ -1,19 +1,13 @@
 import { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, Image, Alert, StatusBar } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
+import { X, SkipBack, SkipForward, Pause, Play } from 'lucide-react-native';
 import { useSessionStore } from '@/features/session/store/useSessionStore';
 import { useCreateSession } from '@/features/session/hooks/useCreateSession';
 import { mapRuntimeToPayload } from '@/features/session/utils/session.mapper';
 
-function formatTime(seconds: number): string {
-  const m = Math.floor(seconds / 60)
-    .toString()
-    .padStart(2, '0');
-  const s = (seconds % 60).toString().padStart(2, '0');
-  return `${m}:${s}`;
-}
-
 const SESSIONS_HREF = '/(protected)/(tabs)/sessions' as Href;
+const PLACEHOLDER = 'https://images.unsplash.com/photo-1555597673-b21d5c935865?w=800';
 
 export default function RunSessionScreen() {
   const router = useRouter();
@@ -30,14 +24,12 @@ export default function RunSessionScreen() {
     resumeSession,
     nextExercise,
     previousExercise,
-    updateCurrentExercise,
     finishSession,
     resetSession,
   } = useSessionStore();
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Tick every second when running
   useEffect(() => {
     if (status === 'running') {
       intervalRef.current = setInterval(tick, 1000);
@@ -49,15 +41,14 @@ export default function RunSessionScreen() {
     };
   }, [status, tick]);
 
-  // No session loaded
   if (status === 'idle' || items.length === 0) {
     return (
-      <View className="flex-1 items-center justify-center px-6">
+      <View className="bg-tkd-bg flex-1 items-center justify-center px-6">
         <Text className="mb-6 text-center text-gray-500">No session started.</Text>
         <TouchableOpacity
           onPress={() => router.replace(SESSIONS_HREF)}
-          className="rounded-lg bg-gray-900 px-6 py-3">
-          <Text className="font-semibold text-white">Go to history</Text>
+          className="bg-brand rounded-2xl px-6 py-3">
+          <Text className="font-bold text-white">Go to history</Text>
         </TouchableOpacity>
       </View>
     );
@@ -66,6 +57,12 @@ export default function RunSessionScreen() {
   const currentItem = items[currentIndex];
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === items.length - 1;
+
+  const mins = Math.floor(secondsLeft / 60)
+    .toString()
+    .padStart(2, '0');
+  const secs = (secondsLeft % 60).toString().padStart(2, '0');
+  const progress = (currentIndex + 1) / items.length;
 
   const handleFinish = () => {
     Alert.alert('Finish session?', 'Save and close this session.', [
@@ -88,137 +85,147 @@ export default function RunSessionScreen() {
   };
 
   return (
-    <View className="flex-1 bg-gray-50">
-      {/* Header */}
-      <View className="flex-row items-center justify-between bg-gray-900 px-4 pb-4 pt-12">
-        <Text className="text-sm text-gray-400">
-          {currentIndex + 1} / {items.length}
-        </Text>
-        <Text className="font-semibold text-white">Session</Text>
-        <TouchableOpacity onPress={handleFinish} disabled={isSaving}>
-          <Text className="text-sm font-medium text-red-400">
-            {isSaving ? 'Saving...' : 'Finish'}
-          </Text>
+    <View className="bg-tkd-bg flex-1">
+      <StatusBar barStyle="light-content" backgroundColor="#0D0905" />
+
+      {/* ── Header ── */}
+      <View className="flex-row items-center justify-between px-5 pb-3 pt-14">
+        <TouchableOpacity
+          onPress={handleFinish}
+          hitSlop={8}
+          className="h-9 w-9 items-center justify-center">
+          <X size={22} color="#fff" />
         </TouchableOpacity>
+        <Text className="text-base font-bold text-white">Taekwondo Session</Text>
+        <View className="w-9" />
       </View>
 
-      <ScrollView className="flex-1 px-4 pt-6" contentContainerStyle={{ paddingBottom: 32 }}>
-        {/* Exercise name */}
-        <Text className="mb-1 text-center text-2xl font-bold text-gray-900">
-          {currentItem.exerciseName}
-        </Text>
-        <Text className="mb-6 text-center text-sm capitalize text-gray-400">
-          {currentItem.exerciseSlug}
-        </Text>
-
-        {/* Timer */}
-        <View className="mb-6 items-center">
-          <Text className="text-6xl font-bold tabular-nums text-gray-900">
-            {formatTime(secondsLeft)}
+      {/* ── Exercise label + progress bar ── */}
+      <View className="px-5 pb-3">
+        <View className="mb-2 flex-row items-center justify-between">
+          <Text className="text-brand text-[11px] font-extrabold uppercase tracking-widest">
+            {currentItem.exerciseName}
           </Text>
-          <Text className="mt-1 text-xs text-gray-400">
-            target: {formatTime(currentItem.targetDurationSec)}
+          <Text className="text-xs text-gray-500">
+            Exercise {currentIndex + 1} of {items.length}
           </Text>
         </View>
+        <View className="bg-tkd-surface h-[5px] w-full overflow-hidden rounded-full">
+          <View
+            className="bg-brand h-full rounded-full"
+            style={{ width: `${Math.round(progress * 100)}%` }}
+          />
+        </View>
+      </View>
+
+      {/* ── Hero image with tip overlay ── */}
+      <View className="bg-black" style={{ height: 230 }}>
+        <Image
+          source={{ uri: currentItem.exerciseImage ?? PLACEHOLDER }}
+          className="h-full w-full"
+          resizeMode="cover"
+        />
+        {!!currentItem.tip && (
+          <View
+            className="absolute bottom-4 left-4 right-16 flex-row items-center gap-2.5 rounded-2xl px-3.5 py-2.5"
+            style={{ backgroundColor: 'rgba(58,22,5,0.90)' }}>
+            <Text style={{ fontSize: 16 }}>💡</Text>
+            <Text className="flex-1 text-[13px] font-medium leading-[18px] text-white">
+              {currentItem.tip}
+            </Text>
+          </View>
+        )}
+      </View>
+
+      {/* ── Exercise name & description ── */}
+      <View className="items-center px-6 pb-1 pt-5">
+        <Text className="mb-1.5 text-center text-[26px] font-black text-white">
+          {currentItem.exerciseName}
+        </Text>
+        {!!currentItem.shortDescription && (
+          <Text className="text-center text-[13px] leading-5 text-gray-500">
+            {currentItem.shortDescription}
+          </Text>
+        )}
+      </View>
+
+      {/* ── Timer ── */}
+      <View className="items-center py-5">
+        <View className="flex-row items-center gap-3">
+          {/* Minutes tile */}
+          <View className="items-center">
+            <View
+              className="bg-tkd-surface items-center justify-center rounded-2xl"
+              style={{ width: 112, height: 100 }}>
+              <Text className="text-[52px] font-bold tabular-nums text-white">{mins}</Text>
+            </View>
+            <Text className="mt-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-600">
+              minutes
+            </Text>
+          </View>
+
+          {/* Colon separator */}
+          <Text className="text-brand mb-5 text-[44px] font-black leading-none">:</Text>
+
+          {/* Seconds tile */}
+          <View className="items-center">
+            <View
+              className="bg-tkd-surface items-center justify-center rounded-2xl"
+              style={{ width: 112, height: 100 }}>
+              <Text className="text-[52px] font-bold tabular-nums text-white">{secs}</Text>
+            </View>
+            <Text className="mt-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-600">
+              seconds
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* ── Transport controls ── */}
+      <View className="flex-row items-center justify-center gap-8 py-4">
+        {/* Previous */}
+        <TouchableOpacity
+          onPress={previousExercise}
+          disabled={isFirst}
+          className="h-14 w-14 items-center justify-center rounded-full"
+          style={{ backgroundColor: '#1A1008', opacity: isFirst ? 0.35 : 1 }}>
+          <SkipBack size={22} color="#fff" fill="#fff" />
+        </TouchableOpacity>
 
         {/* Play / Pause */}
         <TouchableOpacity
           onPress={status === 'running' ? pauseSession : resumeSession}
-          className="mb-6 items-center rounded-xl bg-gray-900 py-4">
-          <Text className="text-base font-semibold text-white">
-            {status === 'running' ? 'Pause' : 'Resume'}
-          </Text>
+          activeOpacity={0.85}
+          className="bg-brand h-[72px] w-[72px] items-center justify-center rounded-full"
+          style={{ shadowColor: '#E8622A', shadowOpacity: 0.55, shadowRadius: 18, elevation: 8 }}>
+          {status === 'running' ? (
+            <Pause size={30} color="#fff" fill="#fff" />
+          ) : (
+            <Play size={30} color="#fff" fill="#fff" />
+          )}
         </TouchableOpacity>
 
-        {/* RPE */}
-        <View className="mb-4 rounded-xl bg-white p-4 shadow-sm">
-          <Text className="mb-3 font-semibold text-gray-700">RPE (1–10)</Text>
-          <View className="flex-row gap-2">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((v) => (
-              <TouchableOpacity
-                key={v}
-                onPress={() => updateCurrentExercise({ rpe: v })}
-                className={`h-8 w-8 items-center justify-center rounded-full ${
-                  currentItem.rpe === v ? 'bg-gray-900' : 'bg-gray-100'
-                }`}>
-                <Text
-                  className={`text-xs font-medium ${
-                    currentItem.rpe === v ? 'text-white' : 'text-gray-700'
-                  }`}>
-                  {v}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
+        {/* Next */}
+        <TouchableOpacity
+          onPress={isLast ? handleFinish : nextExercise}
+          className="h-14 w-14 items-center justify-center rounded-full"
+          style={{ backgroundColor: '#1A1008' }}>
+          <SkipForward size={22} color="#fff" fill="#fff" />
+        </TouchableOpacity>
+      </View>
 
-        {/* Pain */}
-        <View className="mb-6 rounded-xl bg-white p-4 shadow-sm">
-          <Text className="mb-3 font-semibold text-gray-700">Pain</Text>
-          {(['hip', 'knee', 'lowerBack'] as const).map((zone) => (
-            <View key={zone} className="mb-3">
-              <Text className="mb-1 text-xs capitalize text-gray-500">
-                {zone === 'lowerBack' ? 'Lower back' : zone}
-              </Text>
-              <View className="flex-row gap-1">
-                {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((v) => (
-                  <TouchableOpacity
-                    key={v}
-                    onPress={() =>
-                      updateCurrentExercise({ pain: { ...currentItem.pain, [zone]: v } })
-                    }
-                    className={`h-7 w-7 items-center justify-center rounded-md ${
-                      currentItem.pain?.[zone] === v ? 'bg-red-500' : 'bg-gray-100'
-                    }`}>
-                    <Text
-                      className={`text-xs ${
-                        currentItem.pain?.[zone] === v ? 'text-white' : 'text-gray-600'
-                      }`}>
-                      {v}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          ))}
-        </View>
-
-        {/* Progress bar */}
-        <View className="mb-6 flex-row gap-1">
-          {items.map((_, i) => (
-            <View
-              key={i}
-              className={`h-1 flex-1 rounded-full ${
-                i < currentIndex
-                  ? 'bg-green-500'
-                  : i === currentIndex
-                    ? 'bg-gray-900'
-                    : 'bg-gray-200'
-              }`}
-            />
-          ))}
-        </View>
-
-        {/* Prev / Next */}
-        <View className="flex-row gap-3">
-          <TouchableOpacity
-            onPress={previousExercise}
-            disabled={isFirst}
-            className={`flex-1 items-center rounded-xl py-3 ${
-              isFirst ? 'bg-gray-100' : 'bg-gray-200'
-            }`}>
-            <Text className={`font-medium ${isFirst ? 'text-gray-300' : 'text-gray-700'}`}>
-              ← Prev
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={isLast ? handleFinish : nextExercise}
-            className="flex-1 items-center rounded-xl bg-gray-900 py-3">
-            <Text className="font-medium text-white">{isLast ? 'Finish →' : 'Next →'}</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+      {/* ── Finish Session button ── */}
+      <View className="mt-auto px-5 pb-10">
+        <TouchableOpacity
+          onPress={handleFinish}
+          disabled={isSaving}
+          activeOpacity={0.88}
+          className="h-16 items-center justify-center rounded-[18px] bg-white">
+          <Text className="text-[16px] font-black text-gray-900">
+            {isSaving ? 'Saving...' : 'Finish Session'}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
