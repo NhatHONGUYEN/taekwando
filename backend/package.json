@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "test": "jest",
-    "seed:exercises": "node seeds/exercises.seed.js"
+    "seed": "node scripts/seedExercises.js"
   },
   "dependencies": {
     "@clerk/express": "^2.0.1",
