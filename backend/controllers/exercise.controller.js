@@ -2,7 +2,7 @@ import * as exerciseService from "../services/exercise.service.js";
 
 export const getAllExercises = async (req, res, next) => {
   try {
-    const { category, level, focus, equipment } = req.query;
+    const { category, level, focus, equipment, tags, isFeatured } = req.query;
 
     const page = Math.max(1, parseInt(req.query.page) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20));
@@ -12,6 +12,8 @@ export const getAllExercises = async (req, res, next) => {
       level: level !== undefined ? parseInt(level) : null,
       focus: focus ? [].concat(focus) : [],
       equipment: equipment ? [].concat(equipment) : [],
+      tags: tags ? [].concat(tags) : [],
+      isFeatured: isFeatured !== undefined ? isFeatured === "true" : null,
       page,
       limit,
     });

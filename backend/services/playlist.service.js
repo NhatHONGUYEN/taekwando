@@ -26,10 +26,16 @@ export const getPlaylistById = async (playlistId, userId) => {
 };
 
 export const updatePlaylist = async (playlistId, userId, data) => {
+  const allowedFields = ["name", "description", "isPublic"];
+  const updates = {};
+  for (const field of allowedFields) {
+    if (data[field] !== undefined) updates[field] = data[field];
+  }
+
   const playlist = await Playlist.findOneAndUpdate(
     { _id: playlistId, clerkUserId: userId },
-    { $set: data },
-    { returnDocument: "after" },
+    { $set: updates },
+    { returnDocument: "after", runValidators: true },
   );
   if (!playlist) throw new NotFoundError("Playlist not found");
   return playlist;
