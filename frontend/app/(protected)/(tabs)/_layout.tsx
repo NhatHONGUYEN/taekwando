@@ -9,6 +9,10 @@ const icons = {
   profile: User,
 };
 
+const BRAND = '#E8622A';
+const INACTIVE = '#4B5563';
+const TAB_BG = '#0D0905';
+
 export default function TabsLayout() {
   const pathname = usePathname();
 
@@ -16,22 +20,31 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={({ route }) => {
         const Icon = icons[route.name as keyof typeof icons];
-        // Vérifie si le pathname commence par le nom de la route
         const isActive = pathname?.startsWith('/' + route.name);
         return {
           headerShown: false,
-          tabBarIcon: ({ color, size }) => (
-            <Icon color={isActive ? '#007AFF' : color} size={size ?? 24} />
-          ),
-          tabBarActiveTintColor: '#007AFF',
-          tabBarInactiveTintColor: '#888',
+          tabBarIcon: ({ size }) => <Icon color={isActive ? BRAND : INACTIVE} size={size ?? 24} />,
+          tabBarActiveTintColor: BRAND,
+          tabBarInactiveTintColor: INACTIVE,
+          tabBarStyle: {
+            backgroundColor: TAB_BG,
+            borderTopColor: '#2D2015',
+            borderTopWidth: 1,
+            paddingTop: 8,
+            height: 80,
+          },
+          tabBarLabelStyle: {
+            fontSize: 10,
+            fontWeight: '700',
+            letterSpacing: 0.8,
+          },
         };
       }}>
-      <Tabs.Screen name="home" options={{ title: 'Home' }} />
-      <Tabs.Screen name="exercises" options={{ title: 'Exercises' }} />
-      <Tabs.Screen name="playlists" options={{ title: 'Playlists' }} />
-      <Tabs.Screen name="sessions" options={{ title: 'Sessions' }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+      <Tabs.Screen name="home" options={{ title: 'HOME' }} />
+      <Tabs.Screen name="exercises" options={{ title: 'WORKOUTS' }} />
+      <Tabs.Screen name="playlists" options={{ title: 'PLAYLISTS' }} />
+      <Tabs.Screen name="sessions" options={{ title: 'STATS' }} />
+      <Tabs.Screen name="profile" options={{ title: 'PROFILE' }} />
     </Tabs>
   );
 }
