@@ -6,7 +6,7 @@ export function usePlaylist(id: string) {
   const { getToken, isLoaded, userId } = useAuth();
 
   return useQuery({
-    queryKey: ['playlists', id],
+    queryKey: ['playlists', id ?? ''],
     enabled: isLoaded && !!userId && !!id,
     queryFn: async () => {
       const token = await getToken();

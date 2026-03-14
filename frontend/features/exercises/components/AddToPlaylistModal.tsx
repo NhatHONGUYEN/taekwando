@@ -19,52 +19,67 @@ export function AddToPlaylistModal({ exercise, onClose }: Props) {
 
   return (
     <Modal visible={!!exercise} animationType="slide" transparent onRequestClose={onClose}>
-      <View className="flex-1 justify-end">
-        <View className="rounded-t-3xl bg-white px-6 pb-10 pt-6 shadow-lg">
-          <Text className="mb-1 text-xl font-bold">Add to playlist</Text>
-          <Text className="mb-5 text-sm text-gray-500">{exercise?.name}</Text>
+      {/* Backdrop */}
+      <TouchableOpacity
+        className="flex-1"
+        activeOpacity={1}
+        style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
+        onPress={onClose}
+      />
+      <View className="bg-tkd-surface rounded-t-3xl px-6 pb-10 pt-5">
+        {/* Handle bar */}
+        <View className="bg-tkd-border mb-4 h-1 w-10 self-center rounded-full" />
 
-          {isLoading ? (
-            <ActivityIndicator className="my-6" />
-          ) : !playlists || playlists.length === 0 ? (
-            <Text className="py-6 text-center text-gray-500">
-              No playlists yet. Create one first.
-            </Text>
-          ) : (
-            <FlatList
-              data={playlists}
-              keyExtractor={(item) => item._id}
-              scrollEnabled={false}
-              renderItem={({ item }) => {
-                const isAdding = isPending && variables?.playlistId === item._id;
-                return (
-                  <TouchableOpacity
-                    onPress={() => handleAdd(item._id)}
-                    disabled={isPending}
-                    className="mb-2 flex-row items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
-                    <View>
-                      <Text className="font-medium text-gray-900">{item.name}</Text>
-                      <Text className="text-xs text-gray-500">
-                        {item.items.length} exercice{item.items.length > 1 ? 's' : ''}
-                      </Text>
+        <Text className="mb-0.5 text-[18px] font-black text-white">Add to playlist</Text>
+        <Text className="text-brand mb-5 text-[12px] font-bold uppercase tracking-widest">
+          {exercise?.name}
+        </Text>
+
+        {isLoading ? (
+          <ActivityIndicator color="#E8622A" className="my-6" />
+        ) : !playlists || playlists.length === 0 ? (
+          <Text className="py-6 text-center text-gray-500">
+            No playlists yet. Create one first.
+          </Text>
+        ) : (
+          <FlatList
+            data={playlists}
+            keyExtractor={(item) => item._id}
+            scrollEnabled={false}
+            renderItem={({ item }) => {
+              const isAdding = isPending && variables?.playlistId === item._id;
+              return (
+                <TouchableOpacity
+                  onPress={() => handleAdd(item._id)}
+                  disabled={isPending}
+                  activeOpacity={0.75}
+                  className="border-tkd-border mb-2 flex-row items-center justify-between rounded-2xl border px-4 py-3"
+                  style={{ backgroundColor: '#0D0905' }}>
+                  <View>
+                    <Text className="text-[14px] font-bold text-white">{item.name}</Text>
+                    <Text className="mt-0.5 text-xs text-gray-500">
+                      {item.items.length} exercise{item.items.length !== 1 ? 's' : ''}
+                    </Text>
+                  </View>
+                  {isAdding ? (
+                    <ActivityIndicator size="small" color="#E8622A" />
+                  ) : (
+                    <View className="bg-brand rounded-xl px-3 py-1.5">
+                      <Text className="text-[12px] font-extrabold text-white">+ ADD</Text>
                     </View>
-                    {isAdding ? (
-                      <ActivityIndicator size="small" />
-                    ) : (
-                      <Text className="text-sm font-medium text-black">+ Add</Text>
-                    )}
-                  </TouchableOpacity>
-                );
-              }}
-            />
-          )}
+                  )}
+                </TouchableOpacity>
+              );
+            }}
+          />
+        )}
 
-          <TouchableOpacity
-            onPress={onClose}
-            className="mt-3 items-center rounded-xl border border-gray-200 py-3">
-            <Text className="font-medium text-gray-600">Cancel</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          onPress={onClose}
+          activeOpacity={0.75}
+          className="border-tkd-border mt-2 items-center rounded-2xl border py-3.5">
+          <Text className="text-sm font-bold text-gray-500">Cancel</Text>
+        </TouchableOpacity>
       </View>
     </Modal>
   );
