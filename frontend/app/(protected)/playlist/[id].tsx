@@ -1,8 +1,12 @@
 import { View, Text, FlatList, TouchableOpacity, Alert } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { usePlaylist } from '@/features/playlists/hooks/usePlaylist';
 import { useRemoveExerciseFromPlaylist } from '@/features/playlists/hooks/useRemoveExerciseFromPlaylist';
+import { useSessionStore } from '@/features/session/store/useSessionStore';
 import type { Exercise } from '@/features/exercises/types';
+import type { SessionRuntimeItem } from '@/features/session/types/session.types';
+
+const RUN_HREF = '/(protected)/session/run' as Href;
 
 function PlaylistExerciseRow({
   exercise,
@@ -38,6 +42,7 @@ export default function PlaylistDetailScreen() {
   const params = useLocalSearchParams<{ id: string }>();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const router = useRouter();
+  const startSession = useSessionStore((s) => s.startSession);
   const { data: playlist, isLoading, isError } = usePlaylist(id);
   const {
     mutate: removeExercise,
@@ -70,6 +75,21 @@ export default function PlaylistDetailScreen() {
 
   const sortedItems = [...playlist.items].sort((a, b) => a.order - b.order);
 
+  const handleStartSession = () => {
+    const runtimeItems: SessionRuntimeItem[] = sortedItems.map((item) => {
+      const exercise = item.exerciseId as Exercise;
+      return {
+        exerciseId: exercise._id,
+        exerciseName: exercise.name,
+        exerciseSlug: exercise.slug,
+        targetDurationSec: exercise.durationSecDefault,
+        completed: false,
+      };
+    });
+    startSession(runtimeItems);
+    router.push(RUN_HREF);
+  };
+
   return (
     <View className="flex-1 bg-gray-50">
       <View className="bg-white px-4 pb-4 pt-12 shadow-sm">
@@ -83,6 +103,13 @@ export default function PlaylistDetailScreen() {
         <Text className="mt-2 text-sm text-gray-400">
           {playlist.items.length} exercice{playlist.items.length > 1 ? 's' : ''}
         </Text>
+        {sortedItems.length > 0 && (
+          <TouchableOpacity
+            onPress={handleStartSession}
+            className="mt-3 items-center rounded-xl bg-gray-900 py-3">
+            <Text className="font-semibold text-white">▶ Start session</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {sortedItems.length === 0 ? (

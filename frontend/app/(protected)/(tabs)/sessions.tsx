@@ -1,6 +1,8 @@
 import { View, Text, FlatList, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { useSessions } from '@/features/session/hooks/useSessions';
+
+const PLAYLISTS_HREF = '/(protected)/(tabs)/playlists' as Href;
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-GB', {
@@ -48,9 +50,16 @@ export default function SessionsScreen() {
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
-          <View className="mt-16 items-center">
-            <Text className="mb-1 text-gray-400">No sessions yet.</Text>
-            <Text className="text-sm text-gray-400">Start your first session!</Text>
+          <View className="mt-16 items-center px-8">
+            <Text className="mb-1 text-center text-gray-400">No sessions yet.</Text>
+            <Text className="mb-6 text-center text-sm text-gray-400">
+              Open a playlist and tap "Start session" to begin.
+            </Text>
+            <TouchableOpacity
+              onPress={() => router.navigate(PLAYLISTS_HREF)}
+              className="rounded-xl bg-gray-900 px-6 py-3">
+              <Text className="font-semibold text-white">Go to playlists</Text>
+            </TouchableOpacity>
           </View>
         }
         renderItem={({ item }) => (

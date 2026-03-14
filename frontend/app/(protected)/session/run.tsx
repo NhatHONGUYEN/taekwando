@@ -17,7 +17,7 @@ const SESSIONS_HREF = '/(protected)/(tabs)/sessions' as Href;
 
 export default function RunSessionScreen() {
   const router = useRouter();
-  const { mutate: saveSession, isPending: isSaving } = useCreateSession();
+  const { mutateAsync: saveSession, isPending: isSaving } = useCreateSession();
 
   const {
     items,
@@ -72,18 +72,16 @@ export default function RunSessionScreen() {
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Finish',
-        onPress: () => {
+        onPress: async () => {
           finishSession();
           const payload = mapRuntimeToPayload(items, startedAt!, new Date());
-          saveSession(payload, {
-            onSuccess: () => {
-              resetSession();
-              router.replace(SESSIONS_HREF);
-            },
-            onError: () => {
-              Alert.alert('Error', 'Could not save session. Please try again.');
-            },
-          });
+          try {
+            await saveSession(payload);
+            resetSession();
+            router.replace(SESSIONS_HREF);
+          } catch {
+            Alert.alert('Error', 'Could not save session. Please try again.');
+          }
         },
       },
     ]);
