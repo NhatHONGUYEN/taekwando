@@ -1,162 +1,255 @@
-import { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ScrollView } from 'react-native';
+import { useState, useMemo } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  TextInput,
+  ScrollView,
+  StatusBar,
+} from 'react-native';
+import { useRouter, type Href } from 'expo-router';
+import { Search, User, Dumbbell, Leaf, Activity } from 'lucide-react-native';
 import { useExercises } from '@/features/exercises/hooks/useExercises';
 import { ExerciseCard } from '@/features/exercises/components/ExerciseCard';
 import type { ExerciseCategory } from '@/features/exercises/types';
 
-const LIMIT = 20;
+const BRAND = '#E8622A';
+const SURFACE = '#1A1008';
+const BG = '#0D0905';
 
-const CATEGORIES: ExerciseCategory[] = ['mobility', 'flexibility', 'strength'];
-const LEVELS = [1, 2, 3, 4, 5];
+type Chip = { label: string; category?: ExerciseCategory };
 
-type ChipProps = {
-  label: string;
-  active: boolean;
-  onPress: () => void;
-};
+const CHIPS: Chip[] = [
+  { label: 'ALL' },
+  { label: 'DRILLS', category: 'technique' },
+  { label: 'KICKS', category: 'technique' },
+  { label: 'POOMSAE', category: 'poomsae' },
+  { label: 'SPARRING', category: 'sparring' },
+  { label: 'MOBILITY', category: 'mobility' },
+  { label: 'STRENGTH', category: 'strength' },
+  { label: 'FLEXIBILITY', category: 'flexibility' },
+];
 
-function Chip({ label, active, onPress }: ChipProps) {
-  return (
-    <TouchableOpacity
-      onPress={onPress}
-      className={`mr-2 rounded-full border px-4 py-1.5 ${
-        active ? 'border-transparent bg-gray-900' : 'border-gray-300 bg-white'
-      }`}>
-      <Text className={`text-sm font-medium ${active ? 'text-white' : 'text-gray-700'}`}>
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
-}
+const TOP_CATS = [
+  { label: 'STRENGTH', cat: 'strength' as ExerciseCategory, Icon: Dumbbell, color: BRAND },
+  { label: 'FLEXIBILITY', cat: 'flexibility' as ExerciseCategory, Icon: Leaf, color: '#22C55E' },
+  { label: 'BALANCE', cat: 'mobility' as ExerciseCategory, Icon: Activity, color: '#3B82F6' },
+];
 
 export default function ExercisesScreen() {
-  const [category, setCategory] = useState<ExerciseCategory | undefined>();
-  const [level, setLevel] = useState<number | undefined>();
-  const [focus, setFocus] = useState<string | undefined>();
-  const [equipment, setEquipment] = useState<string | undefined>();
+  const router = useRouter();
+  const [active, setActive] = useState('ALL');
+  const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
 
-  const resetPage = () => setPage(1);
+  const selectedCat = CHIPS.find((c) => c.label === active)?.category;
 
-  const toggleCategory = (value: ExerciseCategory) => {
-    setCategory((prev) => (prev === value ? undefined : value));
-    resetPage();
-  };
+  const { data, isLoading } = useExercises({ category: selectedCat, page, limit: 20 });
 
-  const toggleLevel = (value: number) => {
-    setLevel((prev) => (prev === value ? undefined : value));
-    resetPage();
-  };
-
-  const { data, isLoading, isError } = useExercises({
-    category,
-    level,
-    focus,
-    equipment,
-    page,
-    limit: LIMIT,
-  });
-
-  const hasActiveFilters = category !== undefined || level !== undefined;
-
-  const clearFilters = () => {
-    setCategory(undefined);
-    setLevel(undefined);
-    setFocus(undefined);
-    setEquipment(undefined);
-    resetPage();
-  };
-
-  if (isLoading) {
-    return (
-      <View className="flex-1 items-center justify-center px-6">
-        <Text>Loading exercises...</Text>
-      </View>
+  const items = useMemo(() => {
+    const list = data?.items ?? [];
+    if (!search.trim()) return list;
+    const q = search.toLowerCase();
+    return list.filter(
+      (e) => e.name.toLowerCase().includes(q) || e.tags?.some((t) => t.toLowerCase().includes(q))
     );
-  }
+  }, [data?.items, search]);
 
-  if (isError) {
-    return (
-      <View className="flex-1 items-center justify-center px-6">
-        <Text>Error loading exercises</Text>
-      </View>
-    );
-  }
-
-  const items = data?.items ?? [];
   const totalPages = data?.pagination.totalPages ?? 1;
 
   return (
-    <View className="flex-1 bg-gray-50 pt-4">
-      {/* Header */}
-      <View className="mb-3 flex-row items-center justify-between px-4">
-        <Text className="text-lg font-bold">Exercises</Text>
-        {hasActiveFilters && (
-          <TouchableOpacity onPress={clearFilters}>
-            <Text className="text-sm text-gray-500">Reset</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Category filter */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        className="mb-2"
-        contentContainerStyle={{ paddingHorizontal: 16 }}>
-        {CATEGORIES.map((cat) => (
-          <Chip
-            key={cat}
-            label={cat.charAt(0).toUpperCase() + cat.slice(1)}
-            active={category === cat}
-            onPress={() => toggleCategory(cat)}
-          />
-        ))}
-      </ScrollView>
-
-      {/* Level filter */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        className="mb-3"
-        contentContainerStyle={{ paddingHorizontal: 16 }}>
-        {LEVELS.map((lvl) => (
-          <Chip
-            key={lvl}
-            label={`Level ${lvl}`}
-            active={level === lvl}
-            onPress={() => toggleLevel(lvl)}
-          />
-        ))}
-      </ScrollView>
-
-      {/* Results count */}
-      {data && (
-        <Text className="mb-2 px-4 text-xs text-gray-400">
-          {data.pagination.total} exercise{data.pagination.total !== 1 ? 's' : ''}
-        </Text>
-      )}
-
-      {/* List */}
+    <View style={{ flex: 1, backgroundColor: BG }}>
+      <StatusBar barStyle="light-content" backgroundColor={BG} />
       <FlatList
         data={items}
         keyExtractor={(item) => item._id}
         renderItem={({ item }) => <ExerciseCard exercise={item} />}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
+        ListHeaderComponent={
+          <>
+            {/* ── Nav ─────────────────────────────── */}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingTop: 56,
+                paddingBottom: 20,
+              }}>
+              <View style={{ gap: 5 }}>
+                <View style={{ width: 22, height: 2, backgroundColor: BRAND, borderRadius: 1 }} />
+                <View style={{ width: 16, height: 2, backgroundColor: BRAND, borderRadius: 1 }} />
+                <View style={{ width: 22, height: 2, backgroundColor: BRAND, borderRadius: 1 }} />
+              </View>
+              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 18, letterSpacing: 2 }}>
+                LIBRARY
+              </Text>
+              <TouchableOpacity
+                onPress={() => router.push('/(protected)/(tabs)/profile' as Href)}
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  backgroundColor: SURFACE,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                <User size={18} color="#fff" />
+              </TouchableOpacity>
+            </View>
+
+            {/* ── Search ──────────────────────────── */}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: SURFACE,
+                borderRadius: 14,
+                paddingHorizontal: 14,
+                height: 46,
+                marginBottom: 16,
+              }}>
+              <Search size={16} color="#6B7280" />
+              <TextInput
+                value={search}
+                onChangeText={setSearch}
+                placeholder="Search drills, kicks, poomsae..."
+                placeholderTextColor="#4B5563"
+                style={{ flex: 1, marginLeft: 10, fontSize: 14, color: '#fff' }}
+              />
+            </View>
+
+            {/* ── Category chips ───────────────────── */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={{ marginBottom: 24 }}
+              contentContainerStyle={{ gap: 8 }}>
+              {CHIPS.map((chip) => (
+                <TouchableOpacity
+                  key={chip.label}
+                  onPress={() => {
+                    setActive(chip.label);
+                    setPage(1);
+                  }}
+                  style={{
+                    paddingHorizontal: 16,
+                    paddingVertical: 8,
+                    borderRadius: 20,
+                    backgroundColor: active === chip.label ? BRAND : SURFACE,
+                  }}>
+                  <Text
+                    style={{ color: '#fff', fontSize: 12, fontWeight: '700', letterSpacing: 0.5 }}>
+                    {chip.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            {/* ── Section heading ──────────────────── */}
+            {isLoading ? (
+              <Text style={{ color: '#6B7280', fontSize: 14, marginBottom: 16 }}>
+                Loading exercises...
+              </Text>
+            ) : (
+              <Text
+                style={{
+                  color: '#fff',
+                  fontWeight: '900',
+                  fontSize: 20,
+                  fontStyle: 'italic',
+                  marginBottom: 16,
+                }}>
+                RECOMMENDED FOR YOU
+              </Text>
+            )}
+          </>
+        }
         ListEmptyComponent={
-          <View className="mt-12 items-center">
-            <Text className="text-gray-400">No exercises found</Text>
-          </View>
+          !isLoading ? (
+            <View style={{ marginTop: 32, alignItems: 'center' }}>
+              <Text style={{ color: '#6B7280' }}>No exercises found</Text>
+            </View>
+          ) : null
         }
         ListFooterComponent={
-          page < totalPages ? (
-            <TouchableOpacity
-              onPress={() => setPage((p) => p + 1)}
-              className="my-4 items-center rounded-lg bg-gray-200 py-3">
-              <Text className="font-medium text-gray-700">Load more</Text>
-            </TouchableOpacity>
-          ) : null
+          <>
+            {page < totalPages && (
+              <TouchableOpacity
+                onPress={() => setPage((p) => p + 1)}
+                style={{
+                  backgroundColor: SURFACE,
+                  borderRadius: 12,
+                  paddingVertical: 14,
+                  alignItems: 'center',
+                  marginBottom: 24,
+                }}>
+                <Text style={{ color: '#fff', fontWeight: '600' }}>Load more</Text>
+              </TouchableOpacity>
+            )}
+
+            {/* ── Top Techniques ───────────────────── */}
+            <View style={{ marginTop: 8 }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: 16,
+                }}>
+                <Text
+                  style={{
+                    color: '#fff',
+                    fontWeight: '900',
+                    fontSize: 20,
+                    fontStyle: 'italic',
+                  }}>
+                  TOP TECHNIQUES
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    setActive('ALL');
+                    setPage(1);
+                  }}>
+                  <Text style={{ color: BRAND, fontSize: 13, fontWeight: '700' }}>SEE ALL</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                {TOP_CATS.map(({ label, cat, Icon, color }) => (
+                  <TouchableOpacity
+                    key={label}
+                    onPress={() => {
+                      const chip = CHIPS.find((c) => c.category === cat);
+                      if (chip) {
+                        setActive(chip.label);
+                        setPage(1);
+                      }
+                    }}
+                    style={{
+                      flex: 1,
+                      alignItems: 'center',
+                      backgroundColor: SURFACE,
+                      borderRadius: 16,
+                      paddingVertical: 20,
+                    }}>
+                    <Icon size={28} color={color} />
+                    <Text
+                      style={{
+                        color: '#9CA3AF',
+                        fontSize: 10,
+                        fontWeight: '700',
+                        letterSpacing: 1,
+                        marginTop: 10,
+                      }}>
+                      {label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          </>
         }
       />
     </View>
