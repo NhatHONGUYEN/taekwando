@@ -1,26 +1,59 @@
 import mongoose from "mongoose";
 
-const CloudinaryVideoSchema = new mongoose.Schema(
+const ExerciseImageSchema = new mongoose.Schema(
   {
     url: { type: String, required: true },
     publicId: { type: String, required: true },
-    durationSec: { type: Number, min: 0 },
-    format: { type: String },
-    bytes: { type: Number, min: 0 },
-    thumbnailUrl: { type: String },
+    width: { type: Number, min: 0 },
+    height: { type: Number, min: 0 },
+    alt: { type: String, default: "" },
   },
   { _id: false },
 );
 
 const ExerciseSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true, index: true },
-    slug: { type: String, required: true, unique: true, index: true },
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+      index: true,
+    },
+
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      index: true,
+    },
+
+    shortDescription: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 140,
+    },
+
+    description: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 1000,
+    },
 
     category: {
       type: String,
       required: true,
-      enum: ["mobility", "flexibility", "strength"],
+      enum: [
+        "technique",
+        "poomsae",
+        "sparring",
+        "mobility",
+        "strength",
+        "flexibility",
+      ],
       index: true,
     },
 
@@ -43,15 +76,24 @@ const ExerciseSchema = new mongoose.Schema(
       default: ["none"],
     },
 
-    durationSecDefault: {
-      type: Number,
-      min: 10,
-      default: 45,
+    tags: {
+      type: [String],
+      default: [],
+      index: true,
+    },
+
+    image: {
+      type: ExerciseImageSchema,
+      required: true,
     },
 
     instructions: {
       type: [String],
       default: [],
+      validate: {
+        validator: (arr) => arr.length <= 12,
+        message: "Instructions cannot exceed 12 steps",
+      },
     },
 
     commonMistakes: {
@@ -64,7 +106,33 @@ const ExerciseSchema = new mongoose.Schema(
       default: [],
     },
 
-    video: CloudinaryVideoSchema,
+    durationSecDefault: {
+      type: Number,
+      min: 10,
+      default: 45,
+    },
+
+    repsDefault: {
+      type: Number,
+      min: 1,
+    },
+
+    restSecDefault: {
+      type: Number,
+      min: 0,
+      default: 15,
+    },
+
+    caloriesEstimate: {
+      type: Number,
+      min: 0,
+    },
+
+    isFeatured: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
 
     isPublished: {
       type: Boolean,
@@ -76,6 +144,8 @@ const ExerciseSchema = new mongoose.Schema(
 );
 
 ExerciseSchema.index({ category: 1, level: 1, isPublished: 1 });
-ExerciseSchema.index({ focus: 1, category: 1 });
+ExerciseSchema.index({ focus: 1, category: 1, isPublished: 1 });
+ExerciseSchema.index({ tags: 1, isPublished: 1 });
+ExerciseSchema.index({ isFeatured: 1, isPublished: 1 });
 
 export default mongoose.model("Exercise", ExerciseSchema);

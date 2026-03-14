@@ -6,7 +6,9 @@ const PlaylistItemSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Exercise",
       required: true,
+      index: true,
     },
+
     order: {
       type: Number,
       required: true,
@@ -27,21 +29,30 @@ const PlaylistSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
+      trim: true,
+      maxlength: 80,
     },
 
     description: {
       type: String,
       default: "",
+      trim: true,
+      maxlength: 300,
     },
 
     isPublic: {
       type: Boolean,
       default: false,
+      index: true,
     },
 
     items: {
       type: [PlaylistItemSchema],
       default: [],
+      validate: {
+        validator: (items) => items.length <= 100,
+        message: "Playlist cannot exceed 100 exercises",
+      },
     },
   },
   { timestamps: true },
