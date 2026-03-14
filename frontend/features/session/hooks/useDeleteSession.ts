@@ -1,16 +1,16 @@
 import { useAuth } from '@clerk/clerk-expo';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createSession } from '../api/create-session';
-import type { CreateSessionPayload } from '../types/session.types';
+import { deleteSession } from '../api/delete-session';
 
-export function useCreateSession() {
+export function useDeleteSession() {
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (payload: CreateSessionPayload) => {
+    mutationFn: async (id: string) => {
       const token = await getToken();
-      return createSession(payload, token);
+      if (!token) throw new Error('No auth token found');
+      return deleteSession(id, token);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });

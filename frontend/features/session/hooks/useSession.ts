@@ -1,6 +1,6 @@
 import { useAuth } from '@clerk/clerk-expo';
 import { useQuery } from '@tanstack/react-query';
-import { getSessionById } from '../api/session.api';
+import { getSessionById } from '../api/get-session';
 
 export function useSession(id: string) {
   const { getToken, isLoaded, userId } = useAuth();

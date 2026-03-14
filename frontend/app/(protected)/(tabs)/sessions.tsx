@@ -1,6 +1,7 @@
-import { View, Text, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { useSessions } from '@/features/session/hooks/useSessions';
+import { useDeleteSession } from '@/features/session/hooks/useDeleteSession';
 
 const PLAYLISTS_HREF = '/(protected)/(tabs)/playlists' as Href;
 
@@ -21,6 +22,24 @@ function formatDuration(sec: number): string {
 export default function SessionsScreen() {
   const router = useRouter();
   const { data: sessions, isLoading, isError } = useSessions();
+  const { mutateAsync: deleteSession } = useDeleteSession();
+
+  const handleDelete = (id: string) => {
+    Alert.alert('Delete session', 'Are you sure you want to delete this session?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteSession(id);
+          } catch {
+            Alert.alert('Error', 'Could not delete session.');
+          }
+        },
+      },
+    ]);
+  };
 
   if (isLoading) {
     return (
@@ -70,7 +89,18 @@ export default function SessionsScreen() {
             className="mb-3 rounded-xl border border-gray-200 bg-white px-4 py-3">
             <View className="mb-1 flex-row items-center justify-between">
               <Text className="font-semibold text-gray-900">{formatDate(item.performedAt)}</Text>
-              <Text className="text-sm text-gray-500">{formatDuration(item.durationSec)}</Text>
+              <View className="flex-row items-center gap-3">
+                <Text className="text-sm text-gray-500">{formatDuration(item.durationSec)}</Text>
+                <TouchableOpacity
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    handleDelete(item._id);
+                  }}
+                  hitSlop={8}
+                  className="rounded-full p-1">
+                  <Text className="text-sm text-red-500">✕</Text>
+                </TouchableOpacity>
+              </View>
             </View>
             <Text className="text-sm text-gray-500">
               {item.items.length} exercise{item.items.length !== 1 ? 's' : ''}
