@@ -1,13 +1,18 @@
-export type ExerciseVideo = {
+export type ExerciseImage = {
   url: string;
   publicId: string;
-  durationSec?: number;
-  format?: string;
-  bytes?: number;
-  thumbnailUrl?: string;
+  width?: number;
+  height?: number;
+  alt?: string;
 };
 
-export type ExerciseCategory = 'mobility' | 'flexibility' | 'strength';
+export type ExerciseCategory =
+  | 'technique'
+  | 'poomsae'
+  | 'sparring'
+  | 'mobility'
+  | 'flexibility'
+  | 'strength';
 
 export type PaginatedExercises = {
   items: Exercise[];
@@ -23,15 +28,22 @@ export type Exercise = {
   _id: string;
   name: string;
   slug: string;
+  shortDescription: string;
+  description: string;
   category: ExerciseCategory;
   level: number;
   focus: string[];
   equipment: string[];
-  durationSecDefault: number;
+  tags: string[];
+  image: ExerciseImage;
   instructions: string[];
   commonMistakes: string[];
   safetyNotes: string[];
-  video?: ExerciseVideo;
+  durationSecDefault: number;
+  repsDefault?: number;
+  restSecDefault: number;
+  caloriesEstimate?: number;
+  isFeatured: boolean;
   isPublished: boolean;
   createdAt: string;
   updatedAt: string;
