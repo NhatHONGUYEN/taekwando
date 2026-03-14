@@ -1,45 +1,34 @@
-import { SocialConnections } from '@/components/social-connections';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Text } from '@/components/ui/text';
 import { useSignIn } from '@clerk/clerk-expo';
-import { Link, router } from 'expo-router';
+import { useSSO } from '@clerk/clerk-expo';
+import * as AuthSession from 'expo-auth-session';
+import { Link } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
+import { Eye, EyeOff, Zap } from 'lucide-react-native';
 import * as React from 'react';
-import { type TextInput, View } from 'react-native';
+import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
+
+WebBrowser.maybeCompleteAuthSession();
 
 export function SignInForm() {
   const { signIn, setActive, isLoaded } = useSignIn();
+  const { startSSOFlow } = useSSO();
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
+  const [showPassword, setShowPassword] = React.useState(false);
   const passwordInputRef = React.useRef<TextInput>(null);
   const [error, setError] = React.useState<{ email?: string; password?: string }>({});
 
   async function onSubmit() {
-    if (!isLoaded) {
-      return;
-    }
-
-    // Start the sign-in process using the email and password provided
+    if (!isLoaded) return;
     try {
-      const signInAttempt = await signIn.create({
-        identifier: email,
-        password,
-      });
-
-      // If sign-in process is complete, set the created session as active
-      // and redirect the user
+      const signInAttempt = await signIn.create({ identifier: email, password });
       if (signInAttempt.status === 'complete') {
         setError({ email: '', password: '' });
         await setActive({ session: signInAttempt.createdSessionId });
         return;
       }
-      // TODO: Handle other statuses
       console.error(JSON.stringify(signInAttempt, null, 2));
     } catch (err) {
-      // See https://go.clerk.com/mRUDrIe for more info on error handling
       if (err instanceof Error) {
         const isEmailMessage =
           err.message.toLowerCase().includes('identifier') ||
@@ -51,80 +40,193 @@ export function SignInForm() {
     }
   }
 
-  function onEmailSubmitEditing() {
-    passwordInputRef.current?.focus();
+  async function onSocialPress(strategy: 'oauth_google' | 'oauth_apple') {
+    try {
+      const { createdSessionId, setActive: setSSOActive } = await startSSOFlow({
+        strategy,
+        redirectUrl: AuthSession.makeRedirectUri(),
+      });
+      if (createdSessionId && setSSOActive) setSSOActive({ session: createdSessionId });
+    } catch (err) {
+      console.error(JSON.stringify(err, null, 2));
+    }
   }
 
   return (
-    <View className="gap-6">
-      <Card className="border-border/0 shadow-none sm:border-border sm:shadow-sm sm:shadow-black/5">
-        <CardHeader>
-          <CardTitle className="text-center text-xl sm:text-left">Sign in to frontend</CardTitle>
-          <CardDescription className="text-center sm:text-left">
-            Welcome back! Please sign in to continue
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="gap-6">
-          <View className="gap-6">
-            <View className="gap-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                placeholder="m@example.com"
-                keyboardType="email-address"
-                autoComplete="email"
-                autoCapitalize="none"
-                onChangeText={setEmail}
-                onSubmitEditing={onEmailSubmitEditing}
-                returnKeyType="next"
-                submitBehavior="submit"
-              />
-              {error.email ? (
-                <Text className="text-sm font-medium text-destructive">{error.email}</Text>
-              ) : null}
-            </View>
-            <View className="gap-1.5">
-              <View className="flex-row items-center">
-                <Label htmlFor="password">Password</Label>
-                <Link asChild href={`/(auth)/forgot-password?email=${email}`}>
-                  <Button
-                    variant="link"
-                    size="sm"
-                    className="ml-auto h-4 px-1 py-0 web:h-fit sm:h-4">
-                    <Text className="font-normal leading-4">Forgot your password?</Text>
-                  </Button>
-                </Link>
-              </View>
-              <Input
-                ref={passwordInputRef}
-                id="password"
-                secureTextEntry
-                onChangeText={setPassword}
-                returnKeyType="send"
-                onSubmitEditing={onSubmit}
-              />
-              {error.password ? (
-                <Text className="text-sm font-medium text-destructive">{error.password}</Text>
-              ) : null}
-            </View>
-            <Button className="w-full" onPress={onSubmit}>
-              <Text>Continue</Text>
-            </Button>
-          </View>
-          <Text className="text-center text-sm">
-            Don&apos;t have an account?{' '}
-            <Link href="/(auth)/sign-up" className="text-sm underline underline-offset-4">
-              Sign up
-            </Link>
+    <View style={{ gap: 0 }}>
+      {/* ── Logo + title ── */}
+      <View className="mb-8 items-center">
+        <View
+          className="mb-5 items-center justify-center rounded-[20px]"
+          style={{ width: 72, height: 72, backgroundColor: '#1A0E05' }}>
+          <Zap size={34} color="#E8622A" fill="#E8622A" />
+        </View>
+        <Text
+          className="mb-1.5 text-center text-white"
+          style={{ fontSize: 44, fontWeight: '900', letterSpacing: 6 }}>
+          TKD STRIKE
+        </Text>
+        <Text
+          className="text-center"
+          style={{ color: '#8A9BB0', fontSize: 12, fontWeight: '700', letterSpacing: 3 }}>
+          TRAIN HARD. STRIKE FAST.
+        </Text>
+      </View>
+
+      {/* ── Email ── */}
+      <View className="mb-4">
+        <Text
+          className="mb-2"
+          style={{ color: '#C0C8D4', fontSize: 11, fontWeight: '700', letterSpacing: 2 }}>
+          EMAIL ADDRESS
+        </Text>
+        <TextInput
+          value={email}
+          onChangeText={setEmail}
+          placeholder="name@athlete.com"
+          placeholderTextColor="#9CA3AF"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoComplete="email"
+          returnKeyType="next"
+          onSubmitEditing={() => passwordInputRef.current?.focus()}
+          style={{
+            backgroundColor: '#fff',
+            borderRadius: 14,
+            height: 56,
+            paddingHorizontal: 18,
+            fontSize: 15,
+            color: '#111',
+          }}
+        />
+        {!!error.email && <Text className="mt-1.5 text-xs text-red-400">{error.email}</Text>}
+      </View>
+
+      {/* ── Password ── */}
+      <View className="mb-2">
+        <Text
+          className="mb-2"
+          style={{ color: '#C0C8D4', fontSize: 11, fontWeight: '700', letterSpacing: 2 }}>
+          PASSWORD
+        </Text>
+        <View style={{ position: 'relative' }}>
+          <TextInput
+            ref={passwordInputRef}
+            value={password}
+            onChangeText={setPassword}
+            placeholder="••••••••"
+            placeholderTextColor="#9CA3AF"
+            secureTextEntry={!showPassword}
+            returnKeyType="send"
+            onSubmitEditing={onSubmit}
+            style={{
+              backgroundColor: '#fff',
+              borderRadius: 14,
+              height: 56,
+              paddingHorizontal: 18,
+              paddingRight: 52,
+              fontSize: 15,
+              color: '#111',
+            }}
+          />
+          <TouchableOpacity
+            onPress={() => setShowPassword((v) => !v)}
+            style={{ position: 'absolute', right: 16, top: 16 }}
+            hitSlop={8}>
+            {showPassword ? (
+              <EyeOff size={22} color="#6B7280" />
+            ) : (
+              <Eye size={22} color="#6B7280" />
+            )}
+          </TouchableOpacity>
+        </View>
+        {!!error.password && <Text className="mt-1.5 text-xs text-red-400">{error.password}</Text>}
+      </View>
+
+      {/* ── Forgot password ── */}
+      <View className="mb-6 items-end">
+        <Link href={`/(auth)/forgot-password?email=${email}`} asChild>
+          <TouchableOpacity hitSlop={8}>
+            <Text style={{ color: '#E8622A', fontSize: 11, fontWeight: '800', letterSpacing: 1.5 }}>
+              FORGOT PASSWORD?
+            </Text>
+          </TouchableOpacity>
+        </Link>
+      </View>
+
+      {/* ── Sign in button ── */}
+      <TouchableOpacity
+        onPress={onSubmit}
+        activeOpacity={0.85}
+        className="mb-6 items-center justify-center rounded-[16px]"
+        style={{ backgroundColor: '#E8622A', height: 58 }}>
+        <Text style={{ color: '#fff', fontSize: 15, fontWeight: '900', letterSpacing: 2 }}>
+          SIGN IN
+        </Text>
+      </TouchableOpacity>
+
+      {/* ── OR divider ── */}
+      <View className="mb-5 flex-row items-center gap-3">
+        <View className="h-px flex-1" style={{ backgroundColor: '#2D2015' }} />
+        <Text style={{ color: '#4B5563', fontSize: 11, fontWeight: '700', letterSpacing: 2 }}>
+          OR CONTINUE WITH
+        </Text>
+        <View className="h-px flex-1" style={{ backgroundColor: '#2D2015' }} />
+      </View>
+
+      {/* ── Social buttons ── */}
+      <View className="mb-7 flex-row gap-3">
+        <TouchableOpacity
+          onPress={() => onSocialPress('oauth_google')}
+          activeOpacity={0.8}
+          className="flex-1 flex-row items-center justify-center gap-2 rounded-[14px]"
+          style={{
+            backgroundColor: '#1A1008',
+            height: 52,
+            borderWidth: 1,
+            borderColor: '#2D2015',
+          }}>
+          <Image
+            source={{ uri: 'https://img.clerk.com/static/google.png?width=80' }}
+            style={{ width: 18, height: 18 }}
+          />
+          <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800', letterSpacing: 1.5 }}>
+            GOOGLE
           </Text>
-          <View className="flex-row items-center">
-            <Separator className="flex-1" />
-            <Text className="px-4 text-sm text-muted-foreground">or</Text>
-            <Separator className="flex-1" />
-          </View>
-          <SocialConnections />
-        </CardContent>
-      </Card>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => onSocialPress('oauth_apple')}
+          activeOpacity={0.8}
+          className="flex-1 flex-row items-center justify-center gap-2 rounded-[14px]"
+          style={{
+            backgroundColor: '#1A1008',
+            height: 52,
+            borderWidth: 1,
+            borderColor: '#2D2015',
+          }}>
+          <Text style={{ color: '#fff', fontSize: 15 }}>iOS</Text>
+          <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800', letterSpacing: 1.5 }}>
+            APPLE
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* ── Join now ── */}
+      <View className="mb-8 flex-row items-center justify-center gap-1">
+        <Text style={{ color: '#9CA3AF', fontSize: 14 }}>New to the dojo?</Text>
+        <Link href="/(auth)/sign-up" asChild>
+          <TouchableOpacity hitSlop={8}>
+            <Text style={{ color: '#E8622A', fontSize: 14, fontWeight: '800' }}> JOIN NOW</Text>
+          </TouchableOpacity>
+        </Link>
+      </View>
+
+      {/* ── Footer ── */}
+      <Text
+        className="text-center"
+        style={{ color: '#3D3020', fontSize: 10, fontWeight: '700', letterSpacing: 2 }}>
+        MASTERY THROUGH DISCIPLINE • TKD STRIKE V2.4
+      </Text>
     </View>
   );
 }
