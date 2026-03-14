@@ -6,7 +6,7 @@ export function useSession(id: string) {
   const { getToken, isLoaded, userId } = useAuth();
 
   return useQuery({
-    queryKey: ['sessions', id],
+    queryKey: ['sessions', id ?? ''],
     enabled: isLoaded && !!userId && !!id,
     queryFn: async () => {
       const token = await getToken();
