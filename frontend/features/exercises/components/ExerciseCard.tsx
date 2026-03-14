@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
+import { useRouter, type Href } from 'expo-router';
 import { AddToPlaylistModal } from './AddToPlaylistModal';
 import type { Exercise } from '../types';
 
@@ -14,6 +15,7 @@ type Props = {
 };
 
 export function ExerciseCard({ exercise }: Props) {
+  const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
   const categoryStyle = CATEGORY_COLORS[exercise.category] ?? 'bg-gray-100 text-gray-700';
 
@@ -23,7 +25,14 @@ export function ExerciseCard({ exercise }: Props) {
         exercise={modalOpen ? exercise : null}
         onClose={() => setModalOpen(false)}
       />
-      <View className="mb-3 rounded-2xl border border-gray-200 bg-white p-4">
+      <TouchableOpacity
+        onPress={() =>
+          router.push({
+            pathname: '/(protected)/exercise/[slug]',
+            params: { slug: exercise.slug },
+          } as Href)
+        }
+        className="mb-3 rounded-2xl border border-gray-200 bg-white p-4">
         <View className="flex-row items-start justify-between">
           <Text className="flex-1 text-base font-semibold">{exercise.name}</Text>
           <View className={`ml-2 rounded-full px-2 py-0.5 ${categoryStyle.split(' ')[0]}`}>
@@ -48,7 +57,7 @@ export function ExerciseCard({ exercise }: Props) {
             <Text className="text-xs font-medium text-white">+ Playlist</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </TouchableOpacity>
     </>
   );
 }
